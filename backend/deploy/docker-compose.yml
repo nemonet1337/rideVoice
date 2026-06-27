@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+  livekit:
+    image: livekit/livekit-server:v1.8.0
+    command:
+      - --config=/etc/livekit.yaml
+      - --dev
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+      - "7882:7882/udp"
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ../..
+      dockerfile: backend/deploy/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - LIVEKIT_HOST=http://livekit:7880
+      - LIVEKIT_API_KEY=devkey
+      - LIVEKIT_API_SECRET=secret12characterslong
+      - JWT_SECRET=ridevoice-dev-secret-change-in-production
+    depends_on:
+      - livekit
+    restart: unless-stopped
