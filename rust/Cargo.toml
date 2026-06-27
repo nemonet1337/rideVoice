@@ -1,0 +1,9 @@
+[workspace]
+members = ["rv-audio", "rv-crypto"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "Proprietary"
+repository = "https://github.com/ridevoice/ridevoice"
