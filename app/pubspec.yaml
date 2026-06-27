@@ -1,0 +1,40 @@
+name: ridevoice
+description: P2P E2E voice communication for motorcycle touring.
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.5.0
+  flutter: '>=3.24.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  livekit_client: ^2.5.0
+  flutter_rust_bridge: ^2.6.0
+  shared_preferences: ^2.3.0
+  connectivity_plus: ^6.1.0
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^6.0.0
+  universal_io: ^2.2.0
+  uuid: ^4.5.0
+  path_provider: ^2.1.0
+  flutter_callkit_incoming: ^1.0.0
+  flutter_foreground_task: ^8.0.0
+  multicast_dns: ^0.3.2
+  http: ^1.2.0
+  json_annotation: ^4.9.0
+  freezed_annotation: ^2.4.0
+  rxdart: ^0.28.0
+  logging: ^1.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  build_runner: ^2.4.0
+  json_serializable: ^6.8.0
+  freezed: ^2.5.0
+
+flutter:
+  uses-material-design: true
