@@ -3,6 +3,8 @@ package groups
 import (
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Group struct {
@@ -26,13 +28,12 @@ func (s *Service) Create(name string) Group {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	id := "group-" + time.Now().Format("20060102150405")
 	g := Group{
-		ID:        id,
+		ID:        "group-" + uuid.NewString(),
 		Name:      name,
 		CreatedAt: time.Now(),
 	}
-	s.groups[id] = g
+	s.groups[g.ID] = g
 	return g
 }
 

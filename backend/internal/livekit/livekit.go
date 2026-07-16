@@ -1,15 +1,20 @@
 package livekit
 
 import (
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/livekit/protocol/auth"
 )
 
+// JoinTokenTTL bounds how long a minted room join token stays usable.
+const JoinTokenTTL = 6 * time.Hour
+
 type Client struct {
-	host       string
-	apiKey     string
-	apiSecret  string
+	host      string
+	apiKey    string
+	apiSecret string
 }
 
 func NewClient(host, apiKey, apiSecret string) *Client {
@@ -21,6 +26,12 @@ func NewClient(host, apiKey, apiSecret string) *Client {
 }
 
 func (c *Client) MintJoinToken(roomName, participantID string) (string, error) {
+	if c.apiKey == "" || c.apiSecret == "" {
+		return "", errors.New("LiveKit API credentials are not configured")
+	}
+	if roomName == "" || participantID == "" {
+		return "", errors.New("room name and participant ID are required")
+	}
 	at := auth.NewAccessToken(c.apiKey, c.apiSecret)
 	grant := &auth.VideoGrant{
 		RoomJoin: true,
@@ -28,11 +39,15 @@ func (c *Client) MintJoinToken(roomName, participantID string) (string, error) {
 	}
 	at.AddGrant(grant).
 		SetIdentity(participantID).
-		SetValidFor(24 * 3600)
+		SetValidFor(JoinTokenTTL)
 
 	return at.ToJWT()
 }
 
+// CreateRoom / DeleteRoom are intentionally no-ops for now: LiveKit
+// auto-creates rooms on first join, and this backend has no SFU
+// admin credentials in local dev. Wire RoomServiceClient here when
+// server-side room lifecycle management is needed.
 func (c *Client) CreateRoom(roomName string) (string, error) {
 	return roomName, nil
 }

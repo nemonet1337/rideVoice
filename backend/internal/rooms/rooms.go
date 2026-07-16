@@ -3,11 +3,14 @@ package rooms
 import (
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Room struct {
 	ID        string    `json:"id"`
 	Name      string    `json:"name"`
+	CreatedBy string    `json:"created_by"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
@@ -22,17 +25,17 @@ func NewService() *Service {
 	}
 }
 
-func (s *Service) Create(name string) Room {
+func (s *Service) Create(name, createdBy string) Room {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	id := "room-" + time.Now().Format("20060102150405")
 	room := Room{
-		ID:        id,
+		ID:        "room-" + uuid.NewString(),
 		Name:      name,
+		CreatedBy: createdBy,
 		CreatedAt: time.Now(),
 	}
-	s.rooms[id] = room
+	s.rooms[room.ID] = room
 	return room
 }
 

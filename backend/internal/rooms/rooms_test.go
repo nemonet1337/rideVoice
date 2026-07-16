@@ -6,12 +6,15 @@ import (
 
 func TestCreateAndGet(t *testing.T) {
 	svc := NewService()
-	room := svc.Create("test-room")
+	room := svc.Create("test-room", "user-1")
 	if room.ID == "" {
 		t.Fatal("room ID is empty")
 	}
 	if room.Name != "test-room" {
 		t.Fatalf("expected test-room, got %s", room.Name)
+	}
+	if room.CreatedBy != "user-1" {
+		t.Fatalf("expected creator user-1, got %s", room.CreatedBy)
 	}
 
 	got, ok := svc.Get(room.ID)
@@ -25,8 +28,8 @@ func TestCreateAndGet(t *testing.T) {
 
 func TestList(t *testing.T) {
 	svc := NewService()
-	svc.Create("room-1")
-	svc.Create("room-2")
+	svc.Create("room-1", "user-1")
+	svc.Create("room-2", "user-1")
 
 	rooms := svc.List()
 	if len(rooms) != 2 {
@@ -36,7 +39,7 @@ func TestList(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	svc := NewService()
-	room := svc.Create("test")
+	room := svc.Create("test", "user-1")
 
 	if !svc.Delete(room.ID) {
 		t.Fatal("delete returned false for existing room")
@@ -47,5 +50,22 @@ func TestDelete(t *testing.T) {
 
 	if svc.Delete("nonexistent") {
 		t.Fatal("delete returned true for nonexistent room")
+	}
+}
+
+// IDs used to be second-granularity timestamps, which collide under burst
+// creation. UUID-based IDs must stay unique.
+func TestIDUniquenessUnderBurst(t *testing.T) {
+	svc := NewService()
+	seen := make(map[string]bool)
+	for i := 0; i < 100; i++ {
+		room := svc.Create("burst", "user-1")
+		if seen[room.ID] {
+			t.Fatalf("duplicate room ID generated: %s", room.ID)
+		}
+		seen[room.ID] = true
+	}
+	if len(svc.List()) != 100 {
+		t.Fatalf("expected 100 rooms, got %d", len(svc.List()))
 	}
 }
