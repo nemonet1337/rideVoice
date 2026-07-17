@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'claude/**']
   pull_request:
     branches: [main]
 
@@ -13,12 +13,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      # Default features (no native deps) and the full feature set
+      # (opus needs CMake, preinstalled on ubuntu-latest).
       - working-directory: rust
-        run: cargo test
+        run: cargo test --workspace
+      - working-directory: rust
+        run: cargo test --workspace --all-features
       - working-directory: rust
         run: cargo fmt --check
       - working-directory: rust
-        run: cargo clippy -- -D warnings
+        run: cargo clippy --workspace --all-features -- -D warnings
 
   flutter:
     name: Flutter (app)
@@ -44,6 +48,6 @@ jobs:
         with:
           go-version: "1.23"
       - working-directory: backend
-        run: go test ./...
+        run: go test -race ./...
       - working-directory: backend
         run: go vet ./...

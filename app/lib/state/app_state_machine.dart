@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:logging/logging.dart';
 
 enum AppState {
@@ -12,10 +13,21 @@ enum AppState {
   offline,
 }
 
+/// App-level state machine (design doc §7).
+///
+/// Entering [AppState.reconnecting] starts the reconnect timer: if the
+/// state has not left reconnecting within [reconnectTimeout] (30 s in the
+/// design), the machine drops to [AppState.offline] automatically.
 class AppStateMachine {
+  static const Duration defaultReconnectTimeout = Duration(seconds: 30);
+
   final _log = Logger('AppStateMachine');
   final _stateController = StreamController<AppState>.broadcast();
+  final Duration reconnectTimeout;
   AppState _current = AppState.idle;
+  Timer? _reconnectTimer;
+
+  AppStateMachine({this.reconnectTimeout = defaultReconnectTimeout});
 
   AppState get current => _current;
   Stream<AppState> get states => _stateController.stream;
@@ -35,6 +47,9 @@ class AppStateMachine {
       (AppState.transmit, AppState.inGroup) => true,
       (AppState.relaying, AppState.inGroup) => true,
       (AppState.inGroup, AppState.reconnecting) => true,
+      // §7: 接続断検知 can fire while transmitting or relaying too.
+      (AppState.transmit, AppState.reconnecting) => true,
+      (AppState.relaying, AppState.reconnecting) => true,
       (AppState.reconnecting, AppState.inGroup) => true,
       (AppState.reconnecting, AppState.offline) => true,
       (AppState.reconnecting, AppState.idle) => true,
@@ -52,9 +67,21 @@ class AppStateMachine {
     _log.info('$_current -> $target');
     _current = target;
     _stateController.add(_current);
+
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+    if (target == AppState.reconnecting) {
+      _reconnectTimer = Timer(reconnectTimeout, () {
+        if (_current == AppState.reconnecting) {
+          _log.info('reconnect timed out after $reconnectTimeout');
+          transition(AppState.offline);
+        }
+      });
+    }
   }
 
   void dispose() {
+    _reconnectTimer?.cancel();
     _stateController.close();
   }
 }

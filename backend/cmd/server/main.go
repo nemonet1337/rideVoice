@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/ridevoice/backend/internal/auth"
@@ -15,42 +19,41 @@ import (
 )
 
 type Config struct {
-	Port           string
-	LiveKitHost    string
-	LiveKitAPIKey  string
+	Port             string
+	LiveKitHost      string
+	LiveKitAPIKey    string
 	LiveKitAPISecret string
-	JWTSecret      string
+	JWTSecret        string
 }
 
 type Server struct {
-	config   Config
-	auth     *auth.Service
-	rooms    *rooms.Service
-	groups   *groups.Service
-	gateway  *gateway.Registry
-	livekit  *livekit.Client
+	config  Config
+	auth    *auth.Service
+	rooms   *rooms.Service
+	groups  *groups.Service
+	gateway *gateway.Registry
+	livekit *livekit.Client
 }
+
+type contextKey string
+
+const userIDKey contextKey = "userID"
 
 func main() {
 	cfg := Config{
-		Port:           envOrDefault("PORT", "8080"),
-		LiveKitHost:    envOrDefault("LIVEKIT_HOST", "http://localhost:7880"),
-		LiveKitAPIKey:  os.Getenv("LIVEKIT_API_KEY"),
+		Port:             envOrDefault("PORT", "8080"),
+		LiveKitHost:      envOrDefault("LIVEKIT_HOST", "http://localhost:7880"),
+		LiveKitAPIKey:    os.Getenv("LIVEKIT_API_KEY"),
 		LiveKitAPISecret: os.Getenv("LIVEKIT_API_SECRET"),
-		JWTSecret:      envOrDefault("JWT_SECRET", "ridevoice-dev-secret"),
+		JWTSecret:        os.Getenv("JWT_SECRET"),
+	}
+	// Refuse to start with a missing signing secret rather than silently
+	// falling back to a guessable default.
+	if cfg.JWTSecret == "" {
+		log.Fatal("JWT_SECRET is not set; refusing to start with no token signing secret")
 	}
 
-	livekitClient := livekit.NewClient(cfg.LiveKitHost, cfg.LiveKitAPIKey, cfg.LiveKitAPISecret)
-
-	srv := &Server{
-		config:  cfg,
-		auth:    auth.NewService(cfg.JWTSecret),
-		rooms:   rooms.NewService(),
-		groups:  groups.NewService(),
-		gateway: gateway.NewRegistry(),
-		livekit: livekitClient,
-	}
-
+	srv := newServer(cfg)
 	mux := http.NewServeMux()
 	srv.registerRoutes(mux)
 
@@ -67,6 +70,17 @@ func main() {
 
 	if err := httpServer.ListenAndServe(); err != nil {
 		log.Fatalf("server failed: %v", err)
+	}
+}
+
+func newServer(cfg Config) *Server {
+	return &Server{
+		config:  cfg,
+		auth:    auth.NewService(cfg.JWTSecret),
+		rooms:   rooms.NewService(),
+		groups:  groups.NewService(),
+		gateway: gateway.NewRegistry(),
+		livekit: livekit.NewClient(cfg.LiveKitHost, cfg.LiveKitAPIKey, cfg.LiveKitAPISecret),
 	}
 }
 
@@ -93,6 +107,9 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
+// handleAuth issues a token for an anonymous device identity. This is a
+// development-stage placeholder — see docs/DESIGN_DEVIATIONS.md for the
+// limitation and the planned device-registration flow.
 func (s *Server) handleAuth(w http.ResponseWriter, r *http.Request) {
 	token, err := s.auth.IssueToken("user-" + generateID())
 	if err != nil {
@@ -110,7 +127,11 @@ func (s *Server) handleCreateRoom(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid body"})
 		return
 	}
-	room := s.rooms.Create(req.Name)
+	if strings.TrimSpace(req.Name) == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "name is required"})
+		return
+	}
+	room := s.rooms.Create(req.Name, userIDFrom(r))
 	writeJSON(w, http.StatusCreated, room)
 }
 
@@ -130,23 +151,28 @@ func (s *Server) handleGetRoom(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleDeleteRoom(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	if !s.rooms.Delete(id) {
+	room, ok := s.rooms.Get(id)
+	if !ok {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "room not found"})
 		return
 	}
+	if room.CreatedBy != userIDFrom(r) {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "only the room creator can delete it"})
+		return
+	}
+	s.rooms.Delete(id)
 	writeJSON(w, http.StatusNoContent, nil)
 }
 
 func (s *Server) handleJoinToken(w http.ResponseWriter, r *http.Request) {
 	roomID := r.PathValue("id")
-	var req struct {
-		UserID string `json:"user_id"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid body"})
+	if _, ok := s.rooms.Get(roomID); !ok {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "room not found"})
 		return
 	}
-	token, err := s.livekit.MintJoinToken(roomID, req.UserID)
+	// The LiveKit identity is the authenticated user, not a
+	// client-chosen name, so tokens cannot impersonate other riders.
+	token, err := s.livekit.MintJoinToken(roomID, userIDFrom(r))
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
@@ -158,7 +184,14 @@ func (s *Server) handleCreateGroup(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Name string `json:"name"`
 	}
-	json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid body"})
+		return
+	}
+	if strings.TrimSpace(req.Name) == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "name is required"})
+		return
+	}
 	group := s.groups.Create(req.Name)
 	writeJSON(w, http.StatusCreated, group)
 }
@@ -183,6 +216,14 @@ func (s *Server) handleRegisterGateway(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid body"})
 		return
 	}
+	if strings.TrimSpace(req.ID) == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "id is required"})
+		return
+	}
+	if req.BatteryPct < 0 || req.BatteryPct > 100 {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "battery_pct must be 0-100"})
+		return
+	}
 	s.gateway.Register(req)
 	writeJSON(w, http.StatusCreated, map[string]string{"status": "registered"})
 }
@@ -197,18 +238,24 @@ func (s *Server) handleListGateways(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		token := r.Header.Get("Authorization")
-		if token == "" || len(token) < 8 || token[:7] != "Bearer " {
+		header := r.Header.Get("Authorization")
+		token, ok := strings.CutPrefix(header, "Bearer ")
+		if !ok || token == "" {
 			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
 			return
 		}
-		token = token[7:]
-		if _, err := s.auth.ValidateToken(token); err != nil {
+		userID, err := s.auth.ValidateToken(token)
+		if err != nil {
 			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid token"})
 			return
 		}
-		next(w, r)
+		next(w, r.WithContext(context.WithValue(r.Context(), userIDKey, userID)))
 	}
+}
+
+func userIDFrom(r *http.Request) string {
+	id, _ := r.Context().Value(userIDKey).(string)
+	return id
 }
 
 func writeJSON(w http.ResponseWriter, status int, data interface{}) {
@@ -228,17 +275,11 @@ func loggingMiddleware(next http.Handler) http.Handler {
 }
 
 func generateID() string {
-	return time.Now().Format("20060102150405") + randomString(6)
-}
-
-func randomString(n int) string {
-	const letters = "abcdefghijklmnopqrstuvwxyz0123456789"
-	b := make([]byte, n)
-	for i := range b {
-		b[i] = letters[time.Now().UnixNano()%int64(len(letters))]
-		time.Sleep(1) // weak but avoids identical runs
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		log.Fatalf("crypto/rand unavailable: %v", err)
 	}
-	return string(b)
+	return hex.EncodeToString(b)
 }
 
 func envOrDefault(key, defaultVal string) string {

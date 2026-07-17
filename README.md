@@ -11,6 +11,11 @@ P2P E2E communication system for motorcycle touring.
 | Online Backend | Go (REST + JWT + LiveKit SFU) |
 | Offline Mesh | LAN overlay (mDNS/Bonjour + TCP/UDP) |
 
+## Design Notes
+
+- 設計書 v2.1 との差分・逸脱事項: [docs/DESIGN_DEVIATIONS.md](docs/DESIGN_DEVIATIONS.md)
+- ⚠️ `POST /auth` は開発用の匿名トークン発行です(本番前に実認証へ置き換え)。
+
 ## Monorepo Structure
 
 ```

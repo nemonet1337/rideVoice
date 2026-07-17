@@ -3,6 +3,9 @@ name = "rv-audio"
 version.workspace = true
 edition.workspace = true
 
+[lib]
+crate-type = ["lib", "staticlib", "cdylib"]
+
 [features]
 default = []
 opus-codec = ["dep:opus"]

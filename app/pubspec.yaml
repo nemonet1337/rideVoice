@@ -10,7 +10,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  livekit_client: ^2.5.0
+  # 2.4.x: >=2.4.4 requires path ^1.9.1, conflicting with flutter_test
+  # (path 1.9.0) on Flutter 3.27.
+  livekit_client: ^2.4.3
   flutter_rust_bridge: ^2.6.0
   shared_preferences: ^2.3.0
   connectivity_plus: ^6.1.0
@@ -21,8 +23,9 @@ dependencies:
   path_provider: ^2.1.0
   flutter_callkit_incoming: ^1.0.0
   flutter_foreground_task: ^8.0.0
-  multicast_dns: ^0.3.2
   http: ^1.2.0
+  cryptography: ^2.7.0
+  clock: ^1.1.1
   json_annotation: ^4.9.0
   freezed_annotation: ^2.4.0
   rxdart: ^0.28.0
