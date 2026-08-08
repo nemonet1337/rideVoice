@@ -12,32 +12,32 @@ dependencies:
     sdk: flutter
   # 2.4.x: >=2.4.4 requires path ^1.9.1, conflicting with flutter_test
   # (path 1.9.0) on Flutter 3.27.
-  livekit_client: ^2.4.3
+  livekit_client: ^2.10.0
   flutter_rust_bridge: ^2.6.0
   shared_preferences: ^2.3.0
-  connectivity_plus: ^6.1.0
+  connectivity_plus: ^7.3.1
   qr_flutter: ^4.1.0
-  mobile_scanner: ^6.0.0
+  mobile_scanner: ^7.4.0
   universal_io: ^2.2.0
   uuid: ^4.5.0
   path_provider: ^2.1.0
-  flutter_callkit_incoming: ^1.0.0
-  flutter_foreground_task: ^8.0.0
+  flutter_callkit_incoming: ^3.1.3
+  flutter_foreground_task: ^10.0.0
   http: ^1.2.0
   cryptography: ^2.7.0
   clock: ^1.1.1
-  json_annotation: ^4.9.0
-  freezed_annotation: ^2.4.0
+  json_annotation: ^4.12.0
+  freezed_annotation: ^3.1.0
   rxdart: ^0.28.0
   logging: ^1.3.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
-  build_runner: ^2.4.0
-  json_serializable: ^6.8.0
-  freezed: ^2.5.0
+  flutter_lints: ^6.0.0
+  build_runner: ^2.15.1
+  json_serializable: ^6.14.1
+  freezed: ^4.0.0-dev.3
 
 flutter:
   uses-material-design: true
