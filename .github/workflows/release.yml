@@ -50,13 +50,13 @@ jobs:
         run: flutter build apk --release --split-per-abi
 
       - name: Upload fat APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: app-release
           path: app/build/app/outputs/flutter-apk/app-release.apk
 
       - name: Upload split APKs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: app-release-split
           path: |
