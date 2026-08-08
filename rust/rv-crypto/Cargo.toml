@@ -8,7 +8,7 @@ crate-type = ["lib", "staticlib", "cdylib"]
 
 [dependencies]
 x25519-dalek = { version = "2", features = ["static_secrets"] }
-hkdf = "0.12"
+hkdf = "0.13"
 sha2 = "0.10"
 aes-gcm = "0.10"
 rand = "0.8"
