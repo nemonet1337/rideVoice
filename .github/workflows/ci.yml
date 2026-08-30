@@ -7,23 +7,6 @@ on:
     branches: [main]
 
 jobs:
-  rust:
-    name: Rust (core)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      # Default features (no native deps) and the full feature set
-      # (opus needs CMake, preinstalled on ubuntu-latest).
-      - working-directory: rust
-        run: cargo test --workspace
-      - working-directory: rust
-        run: cargo test --workspace --all-features
-      - working-directory: rust
-        run: cargo fmt --check
-      - working-directory: rust
-        run: cargo clippy --workspace --all-features -- -D warnings
-
   flutter:
     name: Flutter (app)
     runs-on: ubuntu-latest
@@ -38,16 +21,3 @@ jobs:
         run: flutter analyze --no-fatal-infos
       - working-directory: app
         run: flutter test
-
-  go:
-    name: Go (backend)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "1.23"
-      - working-directory: backend
-        run: go test -race ./...
-      - working-directory: backend
-        run: go vet ./...

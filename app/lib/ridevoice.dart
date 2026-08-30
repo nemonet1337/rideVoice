@@ -8,6 +8,5 @@ export 'group/group.dart';
 export 'mesh/aodv.dart';
 export 'mesh/mesh.dart';
 export 'mesh/packet.dart';
-export 'signaling/signaling.dart';
 export 'state/app_state_machine.dart';
 export 'transport/transport.dart';

@@ -124,3 +124,14 @@ target/
 # kilo code
 .kilo/
 
+
+# Secrets / local credentials (do not commit)
+.env
+.env.*
+!.env.example
+.dev.vars
+*.pem
+credentials.json
+.mcp-auth/
+.headroom/
+

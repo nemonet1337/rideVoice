@@ -4,7 +4,7 @@ import '../mesh/aodv.dart';
 import '../mesh/packet.dart';
 import 'crypto.dart';
 
-/// Group key material with its rotation epoch (mirrors rv-crypto GroupKey).
+/// Group key material with its rotation epoch.
 class GroupKeyData {
   final Uint8List keyBytes;
   final int epoch;
@@ -19,7 +19,7 @@ class GroupKeyData {
   }
 }
 
-/// Current + previous group key (mirrors rv-crypto KeyRing).
+/// Current + previous group key.
 ///
 /// Rotation is not atomic across the mesh (design doc §13): packets sealed
 /// with the previous generation must still open while the new key
@@ -57,9 +57,9 @@ class GroupKeyRing {
   }
 }
 
-/// Deterministic 96-bit nonce: 4-byte sender ID || 8-byte counter
-/// (mirrors rv-crypto NonceSequence). Distinct sender IDs partition the
-/// nonce space so all group members can seal with the same GK.
+/// Deterministic 96-bit nonce: 4-byte sender ID || 8-byte counter.
+/// Distinct sender IDs partition the nonce space so all group members can
+/// seal with the same GK.
 class NonceSequence {
   final int senderId;
   int _counter;

@@ -21,9 +21,3 @@ class MeshMessage {
     DateTime? timestamp,
   }) : timestamp = timestamp ?? DateTime.now();
 }
-
-enum TransportType {
-  lan,
-  nearbyConnections,
-  multipeer,
-}

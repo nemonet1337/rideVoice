@@ -8,7 +8,7 @@ import 'package:ridevoice/mesh/aodv.dart';
 
 import 'support/in_memory_transport.dart';
 
-/// End-to-end offline audio path (design doc §2-1): PCM → codec → AES-GCM
+/// End-to-end mesh audio path (design doc §2-1): PCM → codec → AES-GCM
 /// seal → mesh → open → jitter buffer → PCM, including loss injection and
 /// a wrong-key eavesdropper.
 void main() {

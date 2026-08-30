@@ -32,8 +32,7 @@ void main() {
       );
     });
 
-    /// RFC 7748 §6.1 X25519 vector — must match rv-crypto
-    /// (rust/rv-crypto/src/key_exchange.rs).
+    /// RFC 7748 §6.1 X25519 vector.
     test('X25519 matches the RFC 7748 test vector', () async {
       final alicePriv = hexDecode(
           '77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a');
@@ -46,9 +45,8 @@ void main() {
       );
     });
 
-    /// Cross-language vector pinned in rv-crypto
-    /// (test_derive_session_key_cross_language_vector).
-    test('HKDF session key matches the Rust implementation', () async {
+    /// Pinned HKDF-SHA256 vector (info = ridevoice-session-key).
+    test('HKDF session key matches the pinned vector', () async {
       final sk = await provider.deriveKey(
         bytes(0x01),
         Uint8List.fromList(utf8.encode('ridevoice-salt')),
@@ -59,9 +57,8 @@ void main() {
       );
     });
 
-    /// Cross-language AES-256-GCM vector pinned in rv-crypto
-    /// (test_cross_language_interop_vector).
-    test('AES-GCM output matches the Rust implementation', () async {
+    /// Pinned AES-256-GCM vector (ciphertext || tag).
+    test('AES-GCM output matches the pinned vector', () async {
       final nonce = NonceSequence(7, counter: 5).nextNonce();
       expect(hexEncode(nonce), '000000070000000000000005');
 

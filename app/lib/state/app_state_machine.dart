@@ -15,6 +15,7 @@ enum AppState {
 
 /// App-level state machine (design doc §7).
 ///
+/// [AppState.offline] means peers were lost, not that a server is gone.
 /// Entering [AppState.reconnecting] starts the reconnect timer: if the
 /// state has not left reconnecting within [reconnectTimeout] (30 s in the
 /// design), the machine drops to [AppState.offline] automatically.

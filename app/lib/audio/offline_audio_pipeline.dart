@@ -4,12 +4,11 @@ import 'dart:typed_data';
 import '../mesh/aodv.dart';
 import 'jitter_buffer.dart';
 
-/// Voice-frame codec stage of the offline pipeline (design doc §2-1).
+/// Voice-frame codec stage of the mesh pipeline (design doc §2-1).
 ///
-/// The production implementation calls the Rust rv-audio Opus codec over
-/// FFI; until that bridge is wired the pipeline runs with
-/// [PassthroughFrameCodec] (raw PCM) so the transport/crypto path stays
-/// exercised end-to-end.
+/// Production will use libopus via opus_dart. Until that is wired the
+/// pipeline runs with [PassthroughFrameCodec] (raw PCM) so the
+/// transport/crypto path stays exercised end-to-end.
 abstract class FrameCodec {
   Uint8List encode(Uint8List pcm);
   Uint8List decode(Uint8List packet);
@@ -31,7 +30,7 @@ class ReceivedAudioFrame {
   ReceivedAudioFrame({required this.srcId, required this.pcm});
 }
 
-/// Offline audio path (design doc §2-1):
+/// Mesh audio path (design doc §2-1):
 ///
 ///   capture PCM → [FrameCodec.encode] → MeshNode.sendVoice
 ///     (AES-256-GCM seal + AODV routing happen inside the node)

@@ -30,26 +30,12 @@ void main() {
     await transport.stop();
   });
 
-  test('DefaultTransportSelector: online → null (LiveKit), offline → mesh',
-      () {
+  test('DefaultTransportSelector always returns a mesh transport', () {
     final hub = InMemoryHub();
     final selector = DefaultTransportSelector(
-      offlineTransportFactory: () => hub.createTransport('X'),
+      transportFactory: () => hub.createTransport('X'),
     );
 
-    expect(
-      selector.select(isOnline: true, peerOS: 'android'),
-      isNull,
-      reason: 'online audio goes through the SFU, no mesh transport',
-    );
-    expect(
-      selector.select(isOnline: false, peerOS: 'android'),
-      isNotNull,
-    );
-    expect(
-      selector.select(isOnline: false, peerOS: 'ios'),
-      isNotNull,
-      reason: 'the LAN overlay serves both platforms',
-    );
+    expect(selector.select(), isNotNull);
   });
 }

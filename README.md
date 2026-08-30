@@ -1,51 +1,39 @@
 # rideVoice
 
-P2P E2E communication system for motorcycle touring.
+rideVoice は、バイクツーリング中にライダー同士が通話するためのスマホアプリです。Android と iOS で動きます。通話は端末同士の P2P で、中身はエンドツーエンド暗号化されます。通話を中継する自前サーバはありません。
 
-## Architecture
+走り出す前に、その場で QR コードを読み合ってグループを作ります。同じ Wi-Fi やテザリングの上では LAN メッシュでつながります。各自が携帯回線のときは、公開 STUN だけの WebRTC でつなぎます（TURN サーバは使いません）。一度も近くで顔を合わせず、携帯だけで初対面の相手とつながることはできません。
 
-| Layer | Technology |
-|-------|-----------|
-| App | Flutter (iOS + Android) |
-| Crypto Core | Rust (`rv-audio` + `rv-crypto` crates) |
-| Online Backend | Go (REST + JWT + LiveKit SFU) |
-| Offline Mesh | LAN overlay (mDNS/Bonjour + TCP/UDP) |
+一部の携帯網（IPv4 CGNAT 同士など）では P2P が失敗します。そのときはリード車のホットスポットに戻してください。
 
-## Design Notes
+## 構成
 
-- 設計書 v2.1 との差分・逸脱事項: [docs/DESIGN_DEVIATIONS.md](docs/DESIGN_DEVIATIONS.md)
-- ⚠️ `POST /auth` は開発用の匿名トークン発行です(本番前に実認証へ置き換え)。
+言語は Flutter (Dart) だけです。
 
-## Monorepo Structure
+| 層 | 内容 |
+|---|---|
+| アプリ | Flutter（iOS + Android） |
+| メッシュ | LAN オーバーレイ（UDP HELLO + AODV） |
+| 暗号 | Dart（X25519 / HKDF-SHA256 / AES-256-GCM） |
+| 音声 | 16 kHz PCM。Opus は `opus_dart` で後から載せる。ノイズ抑制は OS |
 
 ```
 rideVoice/
-  app/          Flutter app
-  backend/      Go REST server
-  rust/         Rust workspace (rv-audio, rv-crypto)
+  app/    Flutter アプリ
 ```
 
-## Quick Start
+## 設計メモ
 
-### Prerequisites
-- Flutter 3.x+
-- Go 1.23+
-- Rust 1.80+
-- Docker (for local LiveKit)
+- 設計書 v2.1 との差分: [docs/DESIGN_DEVIATIONS.md](docs/DESIGN_DEVIATIONS.md)
 
-### Bootstrap
+## 開発
+
+Flutter 3.x 以上。
+
 ```bash
-# Flutter
-cd app && flutter pub get
-
-# Go backend
-cd backend && go run ./cmd/server
-
-# Rust core
-cd rust && cargo test
-
-# LiveKit (local dev)
-docker compose -f backend/deploy/docker-compose.yml up -d
+cd app
+flutter pub get
+flutter test
 ```
 
 ## License

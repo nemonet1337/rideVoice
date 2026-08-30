@@ -22,13 +22,6 @@ jobs:
         with:
           flutter-version: '3.27.0'
 
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android,i686-linux-android
-
-      - name: Install flutter_rust_bridge_codegen
-        run: dart pub global activate flutter_rust_bridge_codegen
-
       - name: Create Android platform
         working-directory: app
         run: flutter create --platforms=android .
@@ -36,10 +29,6 @@ jobs:
       - name: Install Flutter dependencies
         working-directory: app
         run: flutter pub get
-
-      - name: Generate flutter_rust_bridge bindings
-        working-directory: app
-        run: flutter_rust_bridge_codegen generate
 
       - name: Build release APK
         working-directory: app

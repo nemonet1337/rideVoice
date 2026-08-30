@@ -3,9 +3,7 @@ import 'dart:typed_data';
 /// E2E crypto surface (design doc §4-4): X25519 key exchange, HKDF-SHA256
 /// key derivation, AES-256-GCM sealing with associated data.
 ///
-/// The production target is the Rust rv-crypto crate over FFI; the pure
-/// Dart implementation (DartCryptoProvider) is parameter-compatible so
-/// either side can decrypt the other's output.
+/// [DartCryptoProvider] is the sole implementation.
 abstract class CryptoProvider {
   Future<KeyPair> generateKeyPair();
 
@@ -15,7 +13,7 @@ abstract class CryptoProvider {
   /// HKDF-SHA256 with info "ridevoice-session-key", 32-byte output.
   Future<Uint8List> deriveKey(Uint8List sharedSecret, Uint8List salt);
 
-  /// AES-256-GCM. Returns ciphertext || 16-byte tag (matching rv-crypto).
+  /// AES-256-GCM. Returns ciphertext || 16-byte tag.
   Future<Uint8List> encrypt(
     Uint8List plaintext,
     Uint8List key,

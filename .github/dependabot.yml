@@ -1,4 +1,4 @@
-# Flutter app + Go backend + Rust core (LiveKit voice)
+# Flutter app
 version: 2
 updates:
   - package-ecosystem: pub
@@ -13,22 +13,9 @@ updates:
       - dependencies
       - flutter
     groups:
-      livekit:
-        patterns:
-          - "livekit*"
-        update-types:
-          - minor
-          - patch
-      rust-bridge:
-        patterns:
-          - "flutter_rust_bridge"
-        update-types:
-          - minor
-          - patch
       flutter-platform:
         patterns:
           - "shared_preferences"
-          - "connectivity_plus"
           - "path_provider"
           - "universal_io"
           - "flutter_callkit_incoming"
@@ -46,7 +33,6 @@ updates:
       data:
         patterns:
           - "uuid"
-          - "http"
           - "cryptography"
           - "clock"
           - "json_*"
@@ -62,57 +48,6 @@ updates:
           - "build_runner"
           - "json_serializable"
           - "freezed"
-        update-types:
-          - minor
-          - patch
-
-  - package-ecosystem: gomod
-    directory: /backend
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: Asia/Tokyo
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-    groups:
-      livekit:
-        patterns:
-          - "github.com/livekit/*"
-        update-types:
-          - minor
-          - patch
-      auth:
-        patterns:
-          - "github.com/golang-jwt/*"
-          - "github.com/google/uuid"
-        update-types:
-          - minor
-          - patch
-      go-modules:
-        patterns:
-          - "*"
-        update-types:
-          - minor
-          - patch
-
-  - package-ecosystem: cargo
-    directory: /rust
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: Asia/Tokyo
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - rust
-    groups:
-      rust-crates:
-        patterns:
-          - "*"
         update-types:
           - minor
           - patch

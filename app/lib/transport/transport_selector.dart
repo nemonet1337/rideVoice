@@ -1,33 +1,22 @@
 import 'lan_transport.dart';
 import 'mesh_transport.dart';
 
-/// Picks the transport for the current connectivity state (design doc §1-2).
+/// Picks the mesh transport. Always a real transport — there is no SFU path.
 ///
-/// Online → null: audio flows through LiveKit SFU (WebRTC), no mesh
-/// transport is needed. Offline → the LAN overlay mesh, which serves both
-/// Android and iOS (see docs/DESIGN_DEVIATIONS.md — Nearby Connections /
-/// MultipeerConnectivity were descoped in favour of the LAN overlay).
+/// LAN overlay serves both Android and iOS (see docs/DESIGN_DEVIATIONS.md).
+/// A WebRTC data-channel transport can be composed later without changing
+/// callers that already consume [MeshTransport].
 abstract class TransportSelector {
-  MeshTransport? select({
-    required bool isOnline,
-    required String? peerOS,
-  });
+  MeshTransport select();
 }
 
 class DefaultTransportSelector implements TransportSelector {
-  final MeshTransport Function() _offlineTransportFactory;
+  final MeshTransport Function() _transportFactory;
 
   DefaultTransportSelector({
-    MeshTransport Function()? offlineTransportFactory,
-  }) : _offlineTransportFactory =
-            offlineTransportFactory ?? (() => LanTransport());
+    MeshTransport Function()? transportFactory,
+  }) : _transportFactory = transportFactory ?? (() => LanTransport());
 
   @override
-  MeshTransport? select({
-    required bool isOnline,
-    required String? peerOS,
-  }) {
-    if (isOnline) return null; // LiveKit SFU handles the online path.
-    return _offlineTransportFactory();
-  }
+  MeshTransport select() => _transportFactory();
 }

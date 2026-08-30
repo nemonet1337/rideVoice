@@ -7,9 +7,9 @@ import 'package:uuid/uuid.dart';
 
 import 'mesh_transport.dart';
 
-/// LAN overlay transport (see AGENTS.md "Cross-OS mesh"): peers on a shared
-/// WiFi network / hotspot discover each other with periodic UDP broadcast
-/// HELLOs and exchange mesh packets as binary UDP datagrams.
+/// LAN overlay transport: peers on a shared WiFi network / hotspot discover
+/// each other with periodic UDP broadcast HELLOs and exchange mesh packets
+/// as binary UDP datagrams.
 ///
 /// Wire format:
 ///  - HELLO datagram: [0x48 'H'] + UTF-8 node ID (broadcast, also sent as a

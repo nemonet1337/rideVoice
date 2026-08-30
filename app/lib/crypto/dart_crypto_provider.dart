@@ -8,10 +8,8 @@ import 'crypto.dart';
 
 /// Pure-Dart [CryptoProvider] built on package:cryptography.
 ///
-/// Parameter-compatible with the Rust rv-crypto crate (X25519, HKDF-SHA256
-/// with info "ridevoice-session-key", AES-256-GCM emitting
-/// ciphertext || tag) — see the cross-language vectors in
-/// test/crypto_test.dart and rust/rv-crypto/src/seal.rs.
+/// X25519, HKDF-SHA256 with info "ridevoice-session-key", AES-256-GCM
+/// emitting ciphertext || tag. Pinned vectors live in test/crypto_test.dart.
 class DartCryptoProvider implements CryptoProvider {
   static const String sessionKeyInfo = 'ridevoice-session-key';
   static const int tagLength = 16;
